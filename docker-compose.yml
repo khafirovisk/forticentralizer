@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: forticentralizer-api
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=sqlite:////data/forti_manager.db
+      - BACKUP_DIR=/data/backups
+      - SECRET_KEY=${SECRET_KEY:-forticentralizer-change-this-in-production}
+    volumes:
+      - fc_data:/data
+    networks:
+      - fc_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: forticentralizer-ui
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - fc_net
+
+volumes:
+  fc_data:
+    name: forticentralizer_data
+
+networks:
+  fc_net:
+    name: forticentralizer_network

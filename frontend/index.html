@@ -1,0 +1,1329 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FortiCentralizer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:        #080d18;
+  --bg2:       #0d1424;
+  --bg3:       #111827;
+  --card:      #131e30;
+  --border:    #1e2d42;
+  --border2:   #243347;
+  --text:      #e2e8f0;
+  --muted:     #64748b;
+  --cyan:      #00c8f0;
+  --cyan2:     #0099cc;
+  --cyan-dim:  rgba(0,200,240,0.12);
+  --green:     #22d3a5;
+  --green-dim: rgba(34,211,165,0.12);
+  --red:       #f05060;
+  --red-dim:   rgba(240,80,96,0.12);
+  --amber:     #f59e0b;
+  --amber-dim: rgba(245,158,11,0.12);
+  --sidebar-w: 230px;
+  --radius:    10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'IBM Plex Sans', sans-serif; font-size: 14px; overflow: hidden; }
+
+/* ── LAYOUT ── */
+#app { display: flex; height: 100vh; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 10;
+}
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .brand {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: var(--cyan);
+  letter-spacing: -0.3px;
+}
+.sidebar-logo .brand span { color: var(--text); }
+.sidebar-logo .sub {
+  font-size: 10px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+.nav { flex: 1; padding: 12px 10px; display: flex; flex-direction: column; gap: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: 8px;
+  color: var(--muted); font-size: 13px; font-weight: 500;
+  cursor: pointer; transition: all 0.15s; text-decoration: none;
+  border: 1px solid transparent;
+}
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active {
+  background: var(--cyan-dim);
+  color: var(--cyan);
+  border-color: rgba(0,200,240,0.2);
+}
+.nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+.sidebar-footer {
+  padding: 14px 12px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+}
+.user-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: var(--cyan-dim); border: 1px solid rgba(0,200,240,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 700; color: var(--cyan);
+}
+.user-name { font-size: 13px; color: var(--text); flex: 1; }
+.btn-logout {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  padding: 4px; border-radius: 4px; transition: color 0.15s;
+}
+.btn-logout:hover { color: var(--red); }
+
+/* ── MAIN ── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar {
+  height: 56px; background: var(--bg2); border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 28px; gap: 8px; flex-shrink: 0;
+}
+.topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; }
+.topbar-sub { color: var(--muted); font-size: 12px; margin-left: 4px; }
+.topbar-actions { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+.content { flex: 1; overflow-y: auto; padding: 28px; }
+
+/* ── BUTTONS ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: 7px; font-size: 12px; font-weight: 600;
+  border: 1px solid transparent; cursor: pointer; transition: all 0.15s;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+.btn-primary { background: var(--cyan); color: #080d18; border-color: var(--cyan); }
+.btn-primary:hover { background: #00b0d8; }
+.btn-ghost { background: transparent; color: var(--muted); border-color: var(--border2); }
+.btn-ghost:hover { color: var(--text); border-color: var(--border2); background: var(--card); }
+.btn-danger { background: var(--red-dim); color: var(--red); border-color: rgba(240,80,96,0.3); }
+.btn-danger:hover { background: rgba(240,80,96,0.2); }
+.btn-success { background: var(--green-dim); color: var(--green); border-color: rgba(34,211,165,0.3); }
+.btn-success:hover { background: rgba(34,211,165,0.2); }
+.btn-sm { padding: 5px 10px; font-size: 11px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+}
+.card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.card-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; }
+
+/* ── STAT CARDS ── */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 18px 20px;
+}
+.stat-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+.stat-value { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 28px; line-height: 1; }
+.stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+/* ── TABLES ── */
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th {
+  text-align: left; padding: 10px 14px;
+  font-size: 10px; font-weight: 600; letter-spacing: 1.2px;
+  text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+td { padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+tr:last-child td { border-bottom: none; }
+tbody tr { transition: background 0.1s; }
+tbody tr:hover { background: rgba(255,255,255,0.025); }
+.mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+/* ── BADGES ── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.badge-online { background: var(--green-dim); color: var(--green); }
+.badge-offline { background: var(--red-dim); color: var(--red); }
+.badge-unknown { background: rgba(100,116,139,0.15); color: var(--muted); }
+.badge-pass { background: var(--green-dim); color: var(--green); }
+.badge-fail { background: var(--red-dim); color: var(--red); }
+.badge-warning { background: var(--amber-dim); color: var(--amber); }
+
+/* ── SCORE RING ── */
+.score-wrap { display: flex; align-items: center; gap: 16px; }
+.score-ring { position: relative; width: 52px; height: 52px; flex-shrink: 0; }
+.score-ring svg { transform: rotate(-90deg); }
+.score-ring .val {
+  position: absolute; inset: 0; display: flex; align-items: center;
+  justify-content: center; font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 13px;
+}
+.score-bars { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.score-bar-row { display: flex; align-items: center; gap: 8px; font-size: 11px; }
+.score-bar-label { color: var(--muted); width: 90px; flex-shrink: 0; }
+.score-bar-track { flex: 1; height: 5px; background: var(--border2); border-radius: 99px; overflow: hidden; }
+.score-bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+.score-bar-num { color: var(--text); font-family: 'JetBrains Mono', monospace; width: 30px; text-align: right; }
+
+/* ── GRID 2COL ── */
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+/* ── FORMS ── */
+.form-group { margin-bottom: 14px; }
+.form-label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; }
+.form-input {
+  width: 100%; background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: 7px; padding: 9px 12px; color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif; font-size: 13px;
+  transition: border-color 0.15s; outline: none;
+}
+.form-input:focus { border-color: var(--cyan); }
+.form-input::placeholder { color: var(--muted); }
+.form-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: end; }
+.form-row-3 { display: grid; grid-template-columns: 1fr 80px 1fr; gap: 10px; }
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(8,13,24,0.85);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; backdrop-filter: blur(4px);
+  animation: fadeIn 0.15s ease;
+}
+.modal {
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 14px; padding: 28px; width: 480px; max-width: 90vw;
+  max-height: 85vh; overflow-y: auto;
+  animation: slideUp 0.2s ease;
+}
+.modal-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; margin-bottom: 20px; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+
+/* ── TOAST ── */
+#toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 500;
+  min-width: 260px; max-width: 360px;
+  animation: slideIn 0.25s ease;
+  border: 1px solid;
+}
+.toast-success { background: #0d1f18; border-color: rgba(34,211,165,0.3); color: var(--green); }
+.toast-error { background: #1e0d10; border-color: rgba(240,80,96,0.3); color: var(--red); }
+.toast-info { background: #0a1825; border-color: rgba(0,200,240,0.3); color: var(--cyan); }
+
+/* ── LOGIN ── */
+.login-page {
+  position: fixed; inset: 0; background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+}
+.login-card {
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 16px; padding: 40px; width: 380px;
+}
+.login-logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 24px; color: var(--cyan); margin-bottom: 4px; }
+.login-logo span { color: var(--text); }
+.login-sub { font-size: 12px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 32px; }
+.login-card .btn-primary { width: 100%; justify-content: center; padding: 11px; font-size: 14px; margin-top: 4px; }
+
+/* ── EMPTY STATE ── */
+.empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 60px 20px; text-align: center; gap: 12px;
+}
+.empty svg { opacity: 0.2; }
+.empty-title { font-family: 'Syne', sans-serif; font-weight: 700; color: var(--muted); }
+.empty-sub { font-size: 12px; color: var(--muted); opacity: 0.7; }
+
+/* ── BREADCRUMB ── */
+.breadcrumb { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); margin-bottom: 20px; }
+.breadcrumb .sep { opacity: 0.4; }
+.breadcrumb .cur { color: var(--text); font-weight: 500; }
+.breadcrumb a { color: var(--cyan); cursor: pointer; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+
+/* ── DETAIL PAGE ── */
+.detail-scores { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 24px; }
+.detail-score-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px; text-align: center;
+}
+.detail-score-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+.detail-score-val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 40px; }
+.detail-score-bar { height: 6px; background: var(--border2); border-radius: 99px; margin-top: 10px; overflow: hidden; }
+.detail-score-fill { height: 100%; border-radius: 99px; }
+
+/* ── SEPARATOR ── */
+.section-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; margin-bottom: 12px; margin-top: 24px; }
+
+/* ── ANIMATIONS ── */
+@keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes slideUp { from { opacity: 0; transform: translateY(16px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes slideIn { from { opacity: 0; transform: translateX(20px) } to { opacity: 1; transform: translateX(0) } }
+.animate-in { animation: slideUp 0.25s ease; }
+
+/* ── SPINNER ── */
+.spinner {
+  width: 18px; height: 18px; border: 2px solid var(--border2);
+  border-top-color: var(--cyan); border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg) } }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+/* ── SECTION ── */
+.section-gap { display: flex; flex-direction: column; gap: 20px; }
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+<div id="root"></div>
+
+<script>
+// ══════════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════════
+const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ? 'http://localhost:8000'
+  : `${window.location.protocol}//${window.location.hostname}`;
+
+// ══════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════
+const State = {
+  token: localStorage.getItem('fc_token'),
+  user: localStorage.getItem('fc_user'),
+  page: 'dashboard',
+  subPage: null,
+  subData: null,
+};
+
+// ══════════════════════════════════════════════════
+// API HELPER
+// ══════════════════════════════════════════════════
+async function api(method, path, body = null) {
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${State.token}` },
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const r = await fetch(`${API}${path}`, opts);
+  if (r.status === 401) { logout(); return null; }
+  const text = await r.text();
+  try {
+    const data = JSON.parse(text);
+    if (!r.ok) throw new Error(data.detail || 'Erro desconhecido');
+    return data;
+  } catch (e) {
+    if (!r.ok) throw new Error(text || 'Erro desconhecido');
+    return text;
+  }
+}
+
+async function apiBinary(path) {
+  const r = await fetch(`${API}${path}`, {
+    headers: { 'Authorization': `Bearer ${State.token}` },
+  });
+  if (!r.ok) { toast('Erro ao baixar arquivo', 'error'); return; }
+  const blob = await r.blob();
+  const cd = r.headers.get('Content-Disposition') || '';
+  const match = cd.match(/filename="?([^"]+)"?/);
+  const filename = match ? match[1] : 'backup.conf';
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════════
+function toast(msg, type = 'info') {
+  const icons = { success: '✓', error: '✕', info: 'ℹ' };
+  const el = document.createElement('div');
+  el.className = `toast toast-${type}`;
+  el.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+// ══════════════════════════════════════════════════
+// MODAL
+// ══════════════════════════════════════════════════
+function showModal(html) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay';
+  overlay.innerHTML = `<div class="modal">${html}</div>`;
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+  return overlay;
+}
+function closeModal() {
+  document.querySelector('.modal-overlay')?.remove();
+}
+
+// ══════════════════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════════════════
+function logout() {
+  localStorage.removeItem('fc_token');
+  localStorage.removeItem('fc_user');
+  State.token = null;
+  render();
+}
+
+async function doLogin(username, password) {
+  try {
+    const data = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+    }).then(r => { if (!r.ok) throw new Error('Credenciais inválidas'); return r.json(); });
+    State.token = data.access_token;
+    State.user = data.username;
+    localStorage.setItem('fc_token', data.access_token);
+    localStorage.setItem('fc_user', data.username);
+    render();
+  } catch (e) {
+    toast(e.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════
+// ICONS
+// ══════════════════════════════════════════════════
+const I = {
+  dash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>`,
+  backup: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  shield: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>`,
+  assets: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>`,
+  settings: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>`,
+  refresh: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>`,
+  trash: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>`,
+  download: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>`,
+  plus: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>`,
+  logout: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,
+  list: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>`,
+  arrow: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>`,
+};
+
+// ══════════════════════════════════════════════════
+// SCORE RING
+// ══════════════════════════════════════════════════
+function scoreColor(v) {
+  if (v >= 80) return '#22d3a5';
+  if (v >= 60) return '#f59e0b';
+  return '#f05060';
+}
+function scoreRingHTML(val) {
+  const v = val || 0;
+  const r = 22; const c = 2 * Math.PI * r;
+  const offset = c - (v / 100) * c;
+  const col = scoreColor(v);
+  return `<div class="score-ring">
+    <svg width="52" height="52" viewBox="0 0 52 52">
+      <circle cx="26" cy="26" r="${r}" fill="none" stroke="var(--border2)" stroke-width="4"/>
+      <circle cx="26" cy="26" r="${r}" fill="none" stroke="${col}" stroke-width="4"
+        stroke-dasharray="${c}" stroke-dashoffset="${offset}" stroke-linecap="round"/>
+    </svg>
+    <div class="val" style="color:${col}">${Math.round(v)}</div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════
+function fmtDate(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+}
+function fmtSize(bytes) {
+  if (!bytes) return '—';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1048576) return `${(bytes/1024).toFixed(1)} KB`;
+  return `${(bytes/1048576).toFixed(1)} MB`;
+}
+function statusBadge(s) {
+  const m = { online: 'badge-online', offline: 'badge-offline', unknown: 'badge-unknown' };
+  const dot = s === 'online' ? '●' : s === 'offline' ? '●' : '○';
+  return `<span class="badge ${m[s]||'badge-unknown'}">${dot} ${s||'unknown'}</span>`;
+}
+
+// ══════════════════════════════════════════════════
+// NAVIGATE
+// ══════════════════════════════════════════════════
+function navigate(page, subPage = null, subData = null) {
+  State.page = page;
+  State.subPage = subPage;
+  State.subData = subData;
+  render();
+}
+
+// ══════════════════════════════════════════════════
+// RENDER ROOT
+// ══════════════════════════════════════════════════
+function render() {
+  const root = document.getElementById('root');
+  if (!State.token) { root.innerHTML = renderLogin(); return; }
+  root.innerHTML = renderApp();
+  document.querySelectorAll('.nav-item').forEach(el => {
+    el.addEventListener('click', () => navigate(el.dataset.page));
+  });
+  loadPage();
+}
+
+function renderLogin() {
+  return `<div class="login-page">
+    <div class="login-card animate-in">
+      <div class="login-logo">Forti<span>Centralizer</span></div>
+      <div class="login-sub">Network Security Management</div>
+      <div class="form-group">
+        <label class="form-label">Usuário</label>
+        <input id="l-user" class="form-input" placeholder="admin" type="text">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Senha</label>
+        <input id="l-pass" class="form-input" placeholder="••••••••" type="password"
+          onkeydown="if(event.key==='Enter') doLoginBtn()">
+      </div>
+      <button class="btn btn-primary" onclick="doLoginBtn()">Entrar</button>
+    </div>
+  </div>`;
+}
+
+function doLoginBtn() {
+  const u = document.getElementById('l-user').value.trim();
+  const p = document.getElementById('l-pass').value;
+  if (!u || !p) { toast('Preencha usuário e senha', 'error'); return; }
+  doLogin(u, p);
+}
+
+const NAV = [
+  { id: 'dashboard',       label: 'Dashboard',        icon: 'dash'     },
+  { id: 'backups',         label: 'Backups',           icon: 'backup'   },
+  { id: 'security-rating', label: 'Security Rating',   icon: 'shield'   },
+  { id: 'assets',          label: 'Assets',            icon: 'assets'   },
+  { id: 'settings',        label: 'Configurações',     icon: 'settings' },
+];
+
+function renderApp() {
+  const initials = (State.user || 'A').substring(0, 2).toUpperCase();
+  const nav = NAV.map(n => `
+    <div class="nav-item ${State.page === n.id ? 'active' : ''}" data-page="${n.id}">
+      ${I[n.icon]} ${n.label}
+    </div>`).join('');
+  const pageTitle = NAV.find(n => n.id === State.page)?.label || '';
+  return `
+  <div id="app">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="brand">Forti<span>Centralizer</span></div>
+        <div class="sub">Security Management</div>
+      </div>
+      <nav class="nav">${nav}</nav>
+      <div class="sidebar-footer">
+        <div class="user-avatar">${initials}</div>
+        <span class="user-name">${State.user || 'Admin'}</span>
+        <button class="btn-logout" onclick="logout()" title="Sair">${I.logout}</button>
+      </div>
+    </aside>
+    <div class="main">
+      <div class="topbar">
+        <span class="topbar-title" id="page-title">${pageTitle}</span>
+        <div class="topbar-actions" id="topbar-actions"></div>
+      </div>
+      <div class="content" id="page-content">
+        <div class="empty"><div class="spinner"></div></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════════
+// PAGE LOADER
+// ══════════════════════════════════════════════════
+function loadPage() {
+  switch (State.page) {
+    case 'dashboard':       loadDashboard(); break;
+    case 'backups':
+      if (State.subPage === 'list') loadBackupFiles(State.subData);
+      else loadBackups(); break;
+    case 'security-rating':
+      if (State.subPage === 'detail') loadSecurityDetail(State.subData);
+      else loadSecurityRating(); break;
+    case 'assets':          loadAssets(); break;
+    case 'settings':        loadSettings(); break;
+  }
+}
+
+function setContent(html) {
+  const c = document.getElementById('page-content');
+  if (c) { c.innerHTML = html; c.classList.add('animate-in'); }
+}
+function setTitle(t) {
+  const el = document.getElementById('page-title');
+  if (el) el.textContent = t;
+}
+function setActions(html) {
+  const el = document.getElementById('topbar-actions');
+  if (el) el.innerHTML = html;
+}
+
+// ══════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════
+async function loadDashboard() {
+  setTitle('Dashboard');
+  setActions('');
+  try {
+    const [fws, backups, ratings, assets] = await Promise.all([
+      api('GET', '/firewalls'),
+      api('GET', '/backups'),
+      api('GET', '/security-rating'),
+      api('GET', '/assets'),
+    ]);
+    if (!fws) return;
+    const online = fws.filter(f => f.status === 'online').length;
+    const avgRating = ratings.filter(r => r.posture_score !== null);
+    const avgScore = avgRating.length ? Math.round(avgRating.reduce((s,r) => s + r.posture_score, 0) / avgRating.length) : null;
+    const totalBackups = backups.reduce((s, b) => s + b.backup_count, 0);
+    const withRecentBackup = backups.filter(b => {
+      if (!b.last_backup) return false;
+      return (Date.now() - new Date(b.last_backup)) < 7 * 86400000;
+    }).length;
+
+    // Top firewalls by risk
+    const risky = [...ratings].filter(r => r.posture_score !== null).sort((a,b) => a.posture_score - b.posture_score).slice(0,5);
+
+    setContent(`
+      <div class="section-gap">
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Firewalls</div>
+            <div class="stat-value" style="color:var(--cyan)">${fws.length}</div>
+            <div class="stat-sub">${online} online · ${fws.length - online} offline</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Score Médio</div>
+            <div class="stat-value" style="color:${avgScore !== null ? scoreColor(avgScore) : 'var(--muted)'}">${avgScore !== null ? avgScore : '—'}</div>
+            <div class="stat-sub">Security Posture</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Backups</div>
+            <div class="stat-value" style="color:var(--green)">${totalBackups}</div>
+            <div class="stat-sub">${withRecentBackup} com backup recente</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Assets</div>
+            <div class="stat-value" style="color:var(--amber)">${assets.length}</div>
+            <div class="stat-sub">Descobertos via ARP/DHCP</div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Firewalls</span>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('settings')">${I.plus} Adicionar</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Nome</th><th>Host</th><th>Status</th><th>Modelo</th></tr></thead>
+                <tbody>
+                  ${fws.length === 0 ? `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Nenhum firewall cadastrado</td></tr>` :
+                    fws.map(f => `<tr>
+                      <td><strong>${f.name}</strong></td>
+                      <td class="mono">${f.host}:${f.port}</td>
+                      <td>${statusBadge(f.status)}</td>
+                      <td style="color:var(--muted)">${f.model || '—'}</td>
+                    </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <span class="card-title">Security Rating — Atenção</span>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('security-rating')">${I.arrow} Ver todos</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Firewall</th><th>Posture</th><th>Coverage</th><th>Opt.</th></tr></thead>
+                <tbody>
+                  ${risky.length === 0 ? `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Sem dados coletados</td></tr>` :
+                    risky.map(r => `<tr>
+                      <td><strong>${r.firewall_name}</strong></td>
+                      <td style="color:${scoreColor(r.posture_score)};font-family:'Syne',sans-serif;font-weight:700">${Math.round(r.posture_score)}</td>
+                      <td style="color:${scoreColor(r.coverage_score)};font-family:'Syne',sans-serif;font-weight:700">${Math.round(r.coverage_score)}</td>
+                      <td style="color:${scoreColor(r.optimization_score)};font-family:'Syne',sans-serif;font-weight:700">${Math.round(r.optimization_score)}</td>
+                    </tr>`).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Status de Backups</span>
+            <button class="btn btn-ghost btn-sm" onclick="navigate('backups')">${I.arrow} Ver todos</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Firewall</th><th>Serial</th><th>Último Backup</th><th>Total</th><th>Status</th></tr></thead>
+              <tbody>
+                ${backups.length === 0 ? `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:24px">Nenhum firewall cadastrado</td></tr>` :
+                  backups.map(b => `<tr>
+                    <td><strong>${b.firewall_name}</strong></td>
+                    <td class="mono">${b.serial || '—'}</td>
+                    <td>${fmtDate(b.last_backup)}</td>
+                    <td>${b.backup_count}</td>
+                    <td>${statusBadge(b.status)}</td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `);
+  } catch(e) { setContent(`<div class="empty"><div class="empty-title">Erro ao carregar dashboard</div><div class="empty-sub">${e.message}</div></div>`); }
+}
+
+// ══════════════════════════════════════════════════
+// BACKUPS
+// ══════════════════════════════════════════════════
+async function loadBackups() {
+  setTitle('Backups');
+  setActions('');
+  try {
+    const data = await api('GET', '/backups');
+    if (!data) return;
+    setContent(`
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Gerenciamento de Backups</span>
+          <button class="btn btn-primary btn-sm" onclick="backupAllNow()" id="btn-backup-all">${I.refresh} Backup em Todos</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Firewall</th><th>Serial Number</th><th>Último Backup</th><th>Arquivos</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody>
+              ${data.length === 0
+                ? `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px">Nenhum firewall cadastrado</td></tr>`
+                : data.map(b => `<tr id="br-${b.firewall_id}">
+                  <td><strong>${b.firewall_name}</strong></td>
+                  <td class="mono">${b.serial || '—'}</td>
+                  <td>${fmtDate(b.last_backup)}</td>
+                  <td><span style="color:var(--muted)">${b.backup_count} arquivo(s)</span></td>
+                  <td>${statusBadge(b.status)}</td>
+                  <td style="display:flex;gap:6px">
+                    <button class="btn btn-success btn-sm" onclick="backupNow(${b.firewall_id}, '${b.firewall_name}')">${I.refresh} Backup Agora</button>
+                    <button class="btn btn-ghost btn-sm" onclick="navigate('backups','list',{id:${b.firewall_id},name:'${b.firewall_name}'})">${I.list} Listar</button>
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function backupNow(fwId, fwName) {
+  const btn = document.querySelector(`#br-${fwId} .btn-success`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>'; }
+  try {
+    const r = await api('POST', `/backups/firewall/${fwId}`);
+    if (r) toast(`Backup de ${fwName} realizado com sucesso (${fmtSize(r.file_size)})`, 'success');
+    loadBackups();
+  } catch(e) { toast(`Erro: ${e.message}`, 'error'); if (btn) { btn.disabled = false; btn.innerHTML = `${I.refresh} Backup Agora`; } }
+}
+
+async function backupAllNow() {
+  const btn = document.getElementById('btn-backup-all');
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner"></div> Executando...'; }
+  try {
+    const data = await api('GET', '/backups');
+    for (const b of data) {
+      await api('POST', `/backups/firewall/${b.firewall_id}`).catch(() => {});
+    }
+    toast('Backup de todos os firewalls concluído', 'success');
+    loadBackups();
+  } catch(e) { toast(e.message, 'error'); } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = `${I.refresh} Backup em Todos`; }
+  }
+}
+
+async function loadBackupFiles(data) {
+  setTitle('Backups');
+  try {
+    const files = await api('GET', `/backups/firewall/${data.id}`);
+    if (!files) return;
+    setContent(`
+      <div class="breadcrumb">
+        <a onclick="navigate('backups')">Backups</a>
+        <span class="sep">›</span>
+        <span class="cur">${data.name}</span>
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Arquivos de Backup — ${data.name}</span>
+          <button class="btn btn-success btn-sm" onclick="backupNow(${data.id},'${data.name}');setTimeout(()=>loadBackupFiles(${JSON.stringify(data)}),2000)">${I.refresh} Novo Backup</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome do Arquivo</th><th>Data</th><th>Tamanho</th><th>Ações</th></tr></thead>
+            <tbody>
+              ${files.length === 0
+                ? `<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:32px">Nenhum backup encontrado</td></tr>`
+                : files.map(f => `<tr>
+                  <td class="mono">${f.filename}</td>
+                  <td>${fmtDate(f.created_at)}</td>
+                  <td>${fmtSize(f.file_size)}</td>
+                  <td style="display:flex;gap:6px">
+                    <button class="btn btn-ghost btn-sm" onclick="apiBinary('/backups/${f.id}/download')">${I.download} Download</button>
+                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteBackup(${f.id},'${f.filename}',${data.id},'${data.name}')">${I.trash} Deletar</button>
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function confirmDeleteBackup(id, name, fwId, fwName) {
+  const ov = showModal(`
+    <div class="modal-title">Confirmar Exclusão</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:12px">Tem certeza que deseja deletar o backup <strong style="color:var(--text)">${name}</strong>? Esta ação não pode ser desfeita.</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="deleteBackup(${id},${fwId},'${fwName}')">Deletar</button>
+    </div>
+  `);
+}
+
+async function deleteBackup(id, fwId, fwName) {
+  closeModal();
+  try {
+    await api('DELETE', `/backups/${id}`);
+    toast('Backup deletado', 'success');
+    loadBackupFiles({ id: fwId, name: fwName });
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════
+// SECURITY RATING
+// ══════════════════════════════════════════════════
+async function loadSecurityRating() {
+  setTitle('Security Rating');
+  setActions('');
+  try {
+    const data = await api('GET', '/security-rating');
+    if (!data) return;
+    setContent(`
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Security Rating — Todos os Firewalls</span>
+          <button class="btn btn-primary btn-sm" onclick="refreshAllRatings()">${I.refresh} Atualizar Todos</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Firewall</th><th>Serial</th><th>Status</th><th>Security Posture</th><th>Fabric Coverage</th><th>Optimization</th><th>Última Coleta</th><th>Ações</th></tr></thead>
+            <tbody>
+              ${data.length === 0
+                ? `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:32px">Nenhum firewall cadastrado</td></tr>`
+                : data.map(r => `<tr id="sr-${r.firewall_id}">
+                  <td><strong style="cursor:pointer;color:var(--cyan)" onclick="navigate('security-rating','detail',{id:${r.firewall_id},name:'${r.firewall_name}'})">${r.firewall_name}</strong></td>
+                  <td class="mono">${r.serial || '—'}</td>
+                  <td>${statusBadge(r.status)}</td>
+                  <td>${r.posture_score !== null ? `<span style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:${scoreColor(r.posture_score)}">${Math.round(r.posture_score)}</span>` : '—'}</td>
+                  <td>${r.coverage_score !== null ? `<span style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:${scoreColor(r.coverage_score)}">${Math.round(r.coverage_score)}</span>` : '—'}</td>
+                  <td>${r.optimization_score !== null ? `<span style="font-family:'Syne',sans-serif;font-weight:800;font-size:18px;color:${scoreColor(r.optimization_score)}">${Math.round(r.optimization_score)}</span>` : '—'}</td>
+                  <td>${fmtDate(r.collected_at)}</td>
+                  <td style="display:flex;gap:6px">
+                    <button class="btn btn-ghost btn-sm" id="sr-btn-${r.firewall_id}" onclick="refreshRating(${r.firewall_id},'${r.firewall_name}')">${I.refresh} Atualizar</button>
+                    <button class="btn btn-ghost btn-sm" onclick="navigate('security-rating','detail',{id:${r.firewall_id},name:'${r.firewall_name}'})">${I.arrow} Detalhes</button>
+                  </td>
+                </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function refreshRating(fwId, fwName) {
+  const btn = document.getElementById(`sr-btn-${fwId}`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>'; }
+  try {
+    await api('POST', `/security-rating/${fwId}/refresh`);
+    toast(`Security Rating de ${fwName} atualizado`, 'success');
+    loadSecurityRating();
+  } catch(e) { toast(`Erro: ${e.message}`, 'error'); if (btn) { btn.disabled = false; btn.innerHTML = `${I.refresh} Atualizar`; } }
+}
+
+async function refreshAllRatings() {
+  const data = await api('GET', '/security-rating');
+  if (!data) return;
+  for (const r of data) {
+    await api('POST', `/security-rating/${r.firewall_id}/refresh`).catch(() => {});
+  }
+  toast('Security Rating de todos atualizado', 'success');
+  loadSecurityRating();
+}
+
+async function loadSecurityDetail(data) {
+  setTitle('Security Rating');
+  try {
+    const d = await api('GET', `/security-rating/${data.id}/details`);
+    if (!d) return;
+    const controls = d.controls || [];
+    const passed = controls.filter(c => c.status === 'pass');
+    const failed = controls.filter(c => c.status === 'fail');
+    const warning = controls.filter(c => c.status === 'warning');
+
+    const categories = [...new Set(controls.map(c => c.category))].filter(Boolean);
+
+    setContent(`
+      <div class="breadcrumb">
+        <a onclick="navigate('security-rating')">Security Rating</a>
+        <span class="sep">›</span>
+        <span class="cur">${d.firewall_name}</span>
+      </div>
+      <div class="detail-scores">
+        ${[['Security Posture', d.posture_score, '#00c8f0'],['Fabric Coverage', d.coverage_score, '#22d3a5'],['Optimization', d.optimization_score, '#f59e0b']].map(([l,v,c]) => `
+          <div class="detail-score-card">
+            <div class="detail-score-label">${l}</div>
+            <div class="detail-score-val" style="color:${scoreColor(v)}">${Math.round(v||0)}</div>
+            <div class="detail-score-bar"><div class="detail-score-fill" style="width:${v||0}%;background:${scoreColor(v)}"></div></div>
+          </div>`).join('')}
+      </div>
+
+      <div style="display:flex;gap:12px;margin-bottom:20px">
+        <div class="card" style="flex:1;padding:14px 20px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">APROVADOS</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--green)">${passed.length}</div>
+        </div>
+        <div class="card" style="flex:1;padding:14px 20px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">REPROVADOS</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--red)">${failed.length}</div>
+        </div>
+        <div class="card" style="flex:1;padding:14px 20px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">AVISOS</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--amber)">${warning.length}</div>
+        </div>
+        <div class="card" style="flex:1;padding:14px 20px">
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px">TOTAL</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--cyan)">${controls.length}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Controles — ${d.firewall_name}</span>
+          <div style="display:flex;gap:6px">
+            <button class="btn btn-ghost btn-sm filter-btn active" data-filter="all">Todos</button>
+            <button class="btn btn-ghost btn-sm filter-btn" data-filter="fail" style="color:var(--red)">Reprovados</button>
+            <button class="btn btn-ghost btn-sm filter-btn" data-filter="warning" style="color:var(--amber)">Avisos</button>
+            <button class="btn btn-ghost btn-sm filter-btn" data-filter="pass" style="color:var(--green)">Aprovados</button>
+          </div>
+        </div>
+        <div class="table-wrap" id="controls-table">
+          ${renderControlsTable(controls, 'all')}
+        </div>
+      </div>
+    `);
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('controls-table').innerHTML = renderControlsTable(controls, btn.dataset.filter);
+      });
+    });
+  } catch(e) {
+    if (e.message.includes('404')) {
+      setContent(`
+        <div class="breadcrumb"><a onclick="navigate('security-rating')">Security Rating</a><span class="sep">›</span><span class="cur">${data.name}</span></div>
+        <div class="card">
+          <div class="empty">
+            ${I.shield}
+            <div class="empty-title">Sem dados coletados</div>
+            <div class="empty-sub">Clique em Atualizar na lista para coletar o Security Rating deste firewall.</div>
+            <button class="btn btn-primary btn-sm" onclick="refreshRating(${data.id},'${data.name}').then(()=>loadSecurityDetail(${JSON.stringify(data)}))">${I.refresh} Coletar Agora</button>
+          </div>
+        </div>`);
+    } else { toast(e.message, 'error'); }
+  }
+}
+
+function renderControlsTable(controls, filter) {
+  const filtered = filter === 'all' ? controls : controls.filter(c => c.status === filter);
+  if (!filtered.length) return `<div class="empty"><div class="empty-title">Nenhum controle nesta categoria</div></div>`;
+  return `<table>
+    <thead><tr><th>Controle</th><th>Categoria</th><th>Status</th><th>Score</th><th>Recomendação</th></tr></thead>
+    <tbody>
+      ${filtered.map(c => `<tr>
+        <td><strong>${c.name || c.id}</strong></td>
+        <td style="color:var(--muted)">${c.category || '—'}</td>
+        <td><span class="badge badge-${c.status}">${c.status === 'pass' ? '✓' : c.status === 'fail' ? '✕' : '!'} ${c.status}</span></td>
+        <td class="mono">${c.score ?? '—'}</td>
+        <td style="color:var(--muted);font-size:12px">${c.recommendation || '—'}</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+// ══════════════════════════════════════════════════
+// ASSETS
+// ══════════════════════════════════════════════════
+async function loadAssets() {
+  setTitle('Assets');
+  setActions(`<button class="btn btn-primary btn-sm" onclick="refreshAllAssets()">${I.refresh} Atualizar Todos</button>`);
+  try {
+    const assets = await api('GET', '/assets');
+    if (!assets) return;
+
+    const search = `<div style="margin-bottom:16px">
+      <input class="form-input" id="asset-search" placeholder="Filtrar por IP, MAC, Hostname, Firewall..." oninput="filterAssets()" style="max-width:400px">
+    </div>`;
+
+    setContent(`
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Visão Global de Assets</span>
+          <span style="color:var(--muted);font-size:12px">${assets.length} dispositivos descobertos</span>
+        </div>
+        ${search}
+        <div class="table-wrap">
+          <table id="assets-table">
+            <thead><tr><th>IP</th><th>MAC Address</th><th>Hostname</th><th>Interface</th><th>Firewall (Origem)</th><th>Coletado em</th></tr></thead>
+            <tbody id="assets-tbody">
+              ${renderAssetsRows(assets)}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `);
+    window._allAssets = assets;
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function renderAssetsRows(assets) {
+  if (!assets.length) return `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px">Nenhum asset descoberto. Clique em "Atualizar Todos" para coletar.</td></tr>`;
+  return assets.map(a => `<tr>
+    <td class="mono" style="color:var(--cyan)">${a.ip}</td>
+    <td class="mono">${a.mac || '—'}</td>
+    <td>${a.hostname || '—'}</td>
+    <td style="color:var(--muted)">${a.interface || '—'}</td>
+    <td><span style="background:var(--cyan-dim);color:var(--cyan);padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600">${a.firewall_name}</span></td>
+    <td style="color:var(--muted)">${fmtDate(a.collected_at)}</td>
+  </tr>`).join('');
+}
+
+function filterAssets() {
+  const q = document.getElementById('asset-search')?.value.toLowerCase() || '';
+  const filtered = (window._allAssets || []).filter(a =>
+    (a.ip||'').toLowerCase().includes(q) ||
+    (a.mac||'').toLowerCase().includes(q) ||
+    (a.hostname||'').toLowerCase().includes(q) ||
+    (a.firewall_name||'').toLowerCase().includes(q) ||
+    (a.interface||'').toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('assets-tbody');
+  if (tbody) tbody.innerHTML = renderAssetsRows(filtered);
+}
+
+async function refreshAllAssets() {
+  setActions(`<button class="btn btn-primary btn-sm" disabled><div class="spinner"></div> Coletando...</button>`);
+  try {
+    const fws = await api('GET', '/firewalls');
+    if (!fws) return;
+    for (const fw of fws) {
+      await api('POST', `/assets/${fw.id}/refresh`).catch(() => {});
+    }
+    toast('Assets atualizados com sucesso', 'success');
+    loadAssets();
+  } catch(e) { toast(e.message, 'error'); loadAssets(); }
+}
+
+// ══════════════════════════════════════════════════
+// SETTINGS
+// ══════════════════════════════════════════════════
+async function loadSettings() {
+  setTitle('Configurações');
+  setActions('');
+  try {
+    const [fws, users] = await Promise.all([
+      api('GET', '/firewalls'),
+      api('GET', '/auth/users'),
+    ]);
+    if (!fws) return;
+    setContent(`
+      <div class="section-gap">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Firewalls Conectados</span>
+            <button class="btn btn-primary btn-sm" onclick="showAddFirewall()">${I.plus} Adicionar Firewall</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Nome</th><th>Host</th><th>Porta</th><th>Serial</th><th>Status</th><th>Ações</th></tr></thead>
+              <tbody>
+                ${fws.length === 0
+                  ? `<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:32px">Nenhum firewall cadastrado. Adicione o primeiro!</td></tr>`
+                  : fws.map(f => `<tr>
+                    <td><strong>${f.name}</strong></td>
+                    <td class="mono">${f.host}</td>
+                    <td class="mono">${f.port}</td>
+                    <td class="mono">${f.serial || '—'}</td>
+                    <td>${statusBadge(f.status)}</td>
+                    <td style="display:flex;gap:6px">
+                      <button class="btn btn-ghost btn-sm" id="test-btn-${f.id}" onclick="testFw(${f.id},'${f.name}')">${I.refresh} Testar</button>
+                      <button class="btn btn-ghost btn-sm" onclick="showEditFirewall(${JSON.stringify(f).replace(/"/g,'&quot;')})">✏ Editar</button>
+                      <button class="btn btn-danger btn-sm" onclick="confirmDeleteFw(${f.id},'${f.name}')">${I.trash}</button>
+                    </td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Usuários do Sistema</span>
+            <button class="btn btn-primary btn-sm" onclick="showAddUser()">${I.plus} Novo Usuário</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Usuário</th><th>Criado em</th><th>Ações</th></tr></thead>
+              <tbody>
+                ${(users||[]).map(u => `<tr>
+                  <td><strong>${u.username}</strong></td>
+                  <td>${fmtDate(u.created_at)}</td>
+                  <td>
+                    <button class="btn btn-danger btn-sm" onclick="confirmDeleteUser(${u.id},'${u.username}')">${I.trash} Remover</button>
+                  </td>
+                </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    `);
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function showAddFirewall() {
+  const ov = showModal(`
+    <div class="modal-title">${I.plus} Adicionar Firewall</div>
+    <div class="form-group">
+      <label class="form-label">Nome (identificação)</label>
+      <input id="fw-name" class="form-input" placeholder="FGT-Matriz">
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Host (IP ou Hostname)</label>
+        <input id="fw-host" class="form-input" placeholder="192.168.1.1 ou fw.empresa.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Porta HTTPS</label>
+        <input id="fw-port" class="form-input" value="443" type="number">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">API Key (Token de Acesso)</label>
+      <input id="fw-key" class="form-input" placeholder="xxxxxxxxxxxxxxxxxxxxxxxxxxxxx" type="password">
+    </div>
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="font-size:11px;color:var(--muted);line-height:1.6">
+        <strong style="color:var(--amber)">ℹ Certificados Autoassinados:</strong> Conexões com <code style="background:var(--border2);padding:1px 4px;border-radius:3px">verify=False</code> — compatível com IPs internos, externos e hostnames.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="addFirewall()">Adicionar</button>
+    </div>
+  `);
+}
+
+async function addFirewall() {
+  const name = document.getElementById('fw-name').value.trim();
+  const host = document.getElementById('fw-host').value.trim();
+  const port = parseInt(document.getElementById('fw-port').value) || 443;
+  const api_key = document.getElementById('fw-key').value.trim();
+  if (!name || !host || !api_key) { toast('Preencha todos os campos', 'error'); return; }
+  try {
+    await api('POST', '/firewalls', { name, host, port, api_key });
+    closeModal();
+    toast(`Firewall ${name} adicionado!`, 'success');
+    loadSettings();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function showEditFirewall(fw) {
+  showModal(`
+    <div class="modal-title">✏ Editar Firewall</div>
+    <div class="form-group">
+      <label class="form-label">Nome</label>
+      <input id="efw-name" class="form-input" value="${fw.name}">
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label class="form-label">Host</label>
+        <input id="efw-host" class="form-input" value="${fw.host}">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Porta</label>
+        <input id="efw-port" class="form-input" value="${fw.port}" type="number">
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Nova API Key (deixe em branco para manter)</label>
+      <input id="efw-key" class="form-input" placeholder="(não alterar)" type="password">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="updateFirewall(${fw.id})">Salvar</button>
+    </div>
+  `);
+}
+
+async function updateFirewall(id) {
+  const body = {};
+  const name = document.getElementById('efw-name').value.trim();
+  const host = document.getElementById('efw-host').value.trim();
+  const port = parseInt(document.getElementById('efw-port').value) || 443;
+  const key = document.getElementById('efw-key').value.trim();
+  if (name) body.name = name;
+  if (host) body.host = host;
+  body.port = port;
+  if (key) body.api_key = key;
+  try {
+    await api('PUT', `/firewalls/${id}`, body);
+    closeModal();
+    toast('Firewall atualizado', 'success');
+    loadSettings();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function confirmDeleteFw(id, name) {
+  showModal(`
+    <div class="modal-title">Remover Firewall</div>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:8px">Tem certeza que deseja remover <strong style="color:var(--text)">${name}</strong>? Todos os backups, ratings e assets relacionados serão deletados.</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="deleteFw(${id})">Remover</button>
+    </div>
+  `);
+}
+
+async function deleteFw(id) {
+  closeModal();
+  try {
+    await api('DELETE', `/firewalls/${id}`);
+    toast('Firewall removido', 'success');
+    loadSettings();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+async function testFw(id, name) {
+  const btn = document.getElementById(`test-btn-${id}`);
+  if (btn) { btn.disabled = true; btn.innerHTML = '<div class="spinner"></div>'; }
+  try {
+    const r = await api('POST', `/firewalls/${id}/test`);
+    if (r?.success) toast(`${name}: Online ✓ — ${r.info?.model || ''} ${r.info?.firmware || ''}`, 'success');
+    else toast(`${name}: Offline — ${r?.info?.error || 'Sem resposta'}`, 'error');
+    loadSettings();
+  } catch(e) { toast(e.message, 'error'); if (btn) { btn.disabled = false; btn.innerHTML = `${I.refresh} Testar`; } }
+}
+
+function showAddUser() {
+  showModal(`
+    <div class="modal-title">${I.plus} Novo Usuário</div>
+    <div class="form-group">
+      <label class="form-label">Usuário</label>
+      <input id="nu-user" class="form-input" placeholder="operador">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Senha</label>
+      <input id="nu-pass" class="form-input" placeholder="senha segura" type="password">
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-primary" onclick="addUser()">Criar</button>
+    </div>
+  `);
+}
+
+async function addUser() {
+  const username = document.getElementById('nu-user').value.trim();
+  const password = document.getElementById('nu-pass').value;
+  if (!username || !password) { toast('Preencha todos os campos', 'error'); return; }
+  try {
+    await api('POST', '/auth/users', { username, password });
+    closeModal();
+    toast(`Usuário ${username} criado`, 'success');
+    loadSettings();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+function confirmDeleteUser(id, name) {
+  showModal(`
+    <div class="modal-title">Remover Usuário</div>
+    <p style="color:var(--muted);font-size:13px">Tem certeza que deseja remover o usuário <strong style="color:var(--text)">${name}</strong>?</p>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger" onclick="deleteUser(${id})">Remover</button>
+    </div>
+  `);
+}
+
+async function deleteUser(id) {
+  closeModal();
+  try {
+    await api('DELETE', `/auth/users/${id}`);
+    toast('Usuário removido', 'success');
+    loadSettings();
+  } catch(e) { toast(e.message, 'error'); }
+}
+
+// ══════════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════════
+render();
+</script>
+</body>
+</html>
