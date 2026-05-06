@@ -44,7 +44,7 @@ newgrp docker
 
 ```bash
 # 1. Clonar o repositório
-git clone https://github.com/SEU_USUARIO/forticentralizer.git
+git clone https://github.com/khafirovisk/forticentralizer.git
 cd forticentralizer
 
 # 2. (Opcional) Configurar secret key
